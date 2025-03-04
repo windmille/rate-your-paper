@@ -1,0 +1,19 @@
+type PaperComment {
+  doi: ID!
+  timestamp: Long
+  text: String
+  userName: String
+}
+
+type Query {
+  queryPaperComments(doi: ID!): [PaperComment]
+}
+
+type Mutation {
+  addPaperComment(doi: ID!, userName: String, text: String): PaperComment
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}
