@@ -1,0 +1,79 @@
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .title {
+    text-align: center;
+    color: #333;
+  }
+  
+  .doi-link {
+    display: block;
+    text-align: center;
+    font-size: 18px;
+    color: blue;
+    text-decoration: underline;
+    margin-bottom: 20px;
+  }
+  
+  .comments-section {
+    margin-top: 20px;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 5px;
+  }
+  
+  .comment-card {
+    border-bottom: 1px solid #ddd;
+    padding: 10px 0;
+  }
+  
+  .comment-card:last-child {
+    border-bottom: none;
+  }
+
+  .shaded-comment {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .timestamp {
+    font-size: 12px;
+    color: #777;
+  }
+  
+  .input-field, .textarea-field {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  .textarea-field {
+    height: 80px;
+  }
+  
+  .submit-button {
+    background: #007bff;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .submit-button:hover {
+    background: #0056b3;
+  }
+  
+  .submit-button.disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
