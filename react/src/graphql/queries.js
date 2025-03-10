@@ -12,3 +12,14 @@ export const queryPaperComments = /* GraphQL */ `
     }
   }
 `;
+export const queryMostRecentPaperCommentsResolver = /* GraphQL */ `
+  query QueryMostRecentPaperCommentsResolver {
+    queryMostRecentPaperCommentsResolver {
+      doi
+      timestamp
+      text
+      userName
+      __typename
+    }
+  }
+`;

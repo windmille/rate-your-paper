@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import { generateClient } from 'aws-amplify/api';
 import { addPaperComment } from './graphql/mutations';
 import { queryPaperComments } from './graphql/queries';
+import './MainPage.css';
 import './DoiPage.css';
 
 const DoiPage = () => {
+  const [searchDoi, setSearchDoi] = useState('');
+  const navigate = useNavigate();
+
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,9 +21,16 @@ const DoiPage = () => {
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const doi = queryParams.get('doi');
+  const [doi, setDoi] = useState(queryParams.get('doi'));
 
   const client = generateClient();
+
+  const handleSearch = () => {
+    if (!searchDoi.trim()) return;
+    setQueryAttempted(false);
+    setDoi(searchDoi);
+    navigate(`/doi?doi=${searchDoi}`);
+  };
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -44,7 +56,7 @@ const DoiPage = () => {
     };
 
     if (doi && !queryAttempted) fetchComments();
-  }, [doi, client, queryAttempted]);
+  }, [doi, client]);
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -68,58 +80,81 @@ const DoiPage = () => {
   };
 
   return (
-    <div className="container">
-      <h1 className="title">DOI Link</h1>
-      {doi && (
-        <a 
-          href={`https://doi.org/${doi}`} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="doi-link"
-        >
-          {`https://doi.org/${doi}`}
-        </a>
-      )}
-
-      <h1 className="title">Comments</h1>
-      <div className="comments-section">
-        {loading && <p>Loading comments...</p>}
-        {error && <p className="error-message">Error loading comments: {error.message}</p>}
-        {comments.length === 0 ? (
-          <p className="no-comments">No comments available.</p>
-        ) : (
-          comments.map((comment, index) => (
-            <div key={index} className="comment-card shaded-comment">
-              <p><strong>User:</strong> {comment.userName}</p>
-              <p className="timestamp"><strong>At:</strong> {new Date(comment.timestamp).toLocaleString()}</p>
-              <p><strong>Comment:</strong> {comment.text}</p>
-            </div>
-          ))
-        )}
+    <div>
+      <div className="main-container">
+      <h1 className="main-title">Search for Paper Comments</h1>
+      <div className="search-box">
+        <input
+          type="text"
+          value={searchDoi}
+          onChange={(e) => setSearchDoi(e.target.value)}
+          placeholder="Enter DOI (10.xxxx/yyyyy)"
+          className="search-input"
+        />
+        <button onClick={handleSearch} className="search-button">
+          Search
+        </button>
+        <button onClick={() => navigate('/')} className="home-button">
+          Home
+        </button>
       </div>
+    </div>
 
-      <h2>Add a Comment</h2>
-      <input
-        type="text"
-        placeholder="Your name"
-        value={userName}
-        onChange={(e) => setUserName(e.target.value)}
-        className="input-field"
-      />
-      <textarea
-        placeholder="Write your comment here..."
-        value={newComment}
-        onChange={(e) => setNewComment(e.target.value)}
-        className="textarea-field"
-      />
-      <br />
-      <button
-        onClick={handleAddComment}
-        disabled={addingComment}
-        className={addingComment ? 'submit-button disabled' : 'submit-button'}
-      >
-        {addingComment ? 'Submitting...' : 'Submit Comment'}
-      </button>
+      <div className="container">
+        <h1 className="title">DOI</h1>
+        {doi && (
+          <a 
+            href={`https://doi.org/${doi}`} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="doi-link"
+          >
+            {`https://doi.org/${doi}`}
+          </a>
+        )}
+
+        <h1 className="title">Comments</h1>
+        <div className="comments-section">
+          {loading && <p>Loading comments...</p>}
+          {error && <p className="error-message">Error loading comments: {error.message}</p>}
+          {comments.length === 0 ? (
+            <p className="no-comments">No comments available.</p>
+          ) : (
+            comments.map((comment, index) => (
+              <div key={index} className="comment-card shaded-comment">
+                <p>
+                  <span><strong>{comment.userName}</strong></span>
+                  <span className="timestamp"> {new Date(comment.timestamp).toLocaleString()}</span>
+                </p>
+                <p>{comment.text}</p>
+              </div>
+            ))
+          )}
+        </div>
+
+        <h2>Add a Comment</h2>
+        <input
+          type="text"
+          placeholder="Your name"
+          value={userName}
+          onChange={(e) => setUserName(e.target.value)}
+          className="input-field"
+        />
+        <textarea
+          placeholder="Write your comment here..."
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          className="textarea-field"
+        />
+        <br />
+        <button
+          onClick={handleAddComment}
+          disabled={addingComment}
+          className={addingComment ? 'submit-button disabled' : 'submit-button'}
+        >
+          {addingComment ? 'Submitting...' : 'Submit Comment'}
+        </button>
+      </div>
     </div>
   );
 };

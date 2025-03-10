@@ -1,14 +1,17 @@
 import * as cdk from 'aws-cdk-lib';
 import { AuthorizationType, Definition, GraphqlApi, KeyCondition, MappingTemplate, PrimaryKey, Values } from 'aws-cdk-lib/aws-appsync';
 import { Repository } from 'aws-cdk-lib/aws-codecommit';
-import { AttributeType, Billing, Capacity, TableV2 } from 'aws-cdk-lib/aws-dynamodb';
+import { AttributeType, Billing, Capacity, ProjectionType, TableV2 } from 'aws-cdk-lib/aws-dynamodb';
 import { CfnWebACL, CfnWebACLAssociation } from 'aws-cdk-lib/aws-wafv2';
 import * as amplify from '@aws-cdk/aws-amplify-alpha';
 import { Construct } from 'constructs';
-import { BuildSpec } from 'aws-cdk-lib/aws-codebuild';
+import { capitalizeFirstLetter } from './util/util-functions';
 
 const PK = 'doi';
 const SK = 'timestamp';
+const ACTIVE = 'active';
+const RATE = 'rate';
+const activeTimestampIndex = `${capitalizeFirstLetter(ACTIVE)}${capitalizeFirstLetter(SK)}`;
 
 export class CdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -32,6 +35,20 @@ export class CdkStack extends cdk.Stack {
         }),
       }),
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+      globalSecondaryIndexes: [
+        {
+          indexName: activeTimestampIndex,
+          partitionKey: {
+            name: ACTIVE,
+            type: AttributeType.NUMBER,
+          },
+          sortKey: {
+            name: SK,
+            type: AttributeType.NUMBER,
+          },
+          projectionType: ProjectionType.ALL,
+        },
+      ],
     });
 
     const api = new GraphqlApi(this, 'PapersCommentApi', {
@@ -61,11 +78,36 @@ export class CdkStack extends cdk.Stack {
       responseMappingTemplate: MappingTemplate.dynamoDbResultList(),
     });
 
+    papersDataSource.createResolver('QueryMostRecentPaperCommentsResolver', {
+      typeName: 'Query',
+      fieldName: 'queryMostRecentPaperCommentsResolver',
+      requestMappingTemplate: MappingTemplate.fromString(`
+        {
+          "version": "2017-02-28",
+          "operation": "Query",
+          "index": "${activeTimestampIndex}",
+          "query": {
+              "expression": "#${ACTIVE} = :${ACTIVE}",
+              "expressionNames": {
+                "#${ACTIVE}": "${ACTIVE}"
+              },
+              "expressionValues": {
+                ":${ACTIVE}": { "N": "1" }
+              }
+          },
+          "limit": 10,
+          "scanIndexForward": false
+        }
+      `),
+      responseMappingTemplate: MappingTemplate.dynamoDbResultList(),
+    });
+
     papersDataSource.createResolver('AddPaperCommentResolver', {
       typeName: 'Mutation',
       fieldName: 'addPaperComment',
       requestMappingTemplate: MappingTemplate.fromString(`
         #set($input = $ctx.args)
+        $util.qr($input.put("${ACTIVE}", 1))
         #set($doiRegex = "^10\\.\\d{4,9}/[-._;()/:A-Za-z0-9]+$")
 
         #if(!$util.matches($doiRegex, $ctx.args.doi))

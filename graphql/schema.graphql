@@ -7,6 +7,7 @@ type PaperComment {
 
 type Query {
   queryPaperComments(doi: ID!): [PaperComment]
+  queryMostRecentPaperCommentsResolver: [PaperComment]
 }
 
 type Mutation {
